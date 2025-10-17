@@ -132,29 +132,3 @@ BEGIN
     WHERE Id = @ProductId;
 END
 GO
-
--- =============================================
--- SP: SEARCH - Search Products by Name/Description
--- =============================================
-CREATE OR ALTER PROCEDURE sp_SearchProducts
-    @SearchTerm NVARCHAR(200)
-AS
-BEGIN
-    SET NOCOUNT ON;
-    
-    SELECT 
-        Id,
-        Name,
-        Description,
-        Price,
-        CreatedDate,
-        IsActive
-    FROM Products
-    WHERE IsActive = 1
-        AND (
-            Name LIKE '%' + @SearchTerm + '%' 
-            OR Description LIKE '%' + @SearchTerm + '%'
-        )
-    ORDER BY CreatedDate DESC;
-END
-GO
