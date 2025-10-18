@@ -8,39 +8,24 @@
 USE SCIProductsDB;
 GO
 
--- =============================================
--- SP: CREATE - Insert New Product
--- =============================================
-CREATE OR ALTER PROCEDURE sp_CreateProduct
-    @Name NVARCHAR(200),
-    @Description NVARCHAR(1000) = NULL,
-    @Price DECIMAL(18,2),
-    @ProductId INT OUTPUT
+CREATE PROCEDURE sp_AddProduct
+    @Name NVARCHAR(100),
+    @Description NVARCHAR(255),
+    @Price DECIMAL(18,2)
 AS
 BEGIN
     SET NOCOUNT ON;
-    
-    INSERT INTO Products (Name, Description, Price, CreatedDate, IsActive)
-    VALUES (@Name, @Description, @Price, GETDATE(), 1);
-    
-    SET @ProductId = SCOPE_IDENTITY();
-    
-    SELECT 
-        Id,
-        Name,
-        Description,
-        Price,
-        CreatedDate,
-        IsActive
-    FROM Products
-    WHERE Id = @ProductId;
-END
+
+    INSERT INTO Products (Name, Description, Price)
+    VALUES (@Name, @Description, @Price);
+
+    SELECT * 
+    FROM Products 
+    WHERE Id = SCOPE_IDENTITY();
+END;
 GO
 
 
--- =============================================
--- SP: READ ALL - Get All Active Products
--- =============================================
 CREATE OR ALTER PROCEDURE sp_GetAllProducts
 AS
 BEGIN
@@ -59,9 +44,7 @@ BEGIN
 END
 GO
 
--- =============================================
--- SP: READ BY ID - Get Product By ID
--- =============================================
+
 CREATE OR ALTER PROCEDURE sp_GetProductById
     @ProductId INT
 AS
@@ -80,9 +63,7 @@ BEGIN
 END
 GO
 
--- =============================================
--- SP: UPDATE - Update Existing Product
--- =============================================
+
 CREATE OR ALTER PROCEDURE sp_UpdateProduct
     @ProductId INT,
     @Name NVARCHAR(200),
@@ -111,9 +92,7 @@ BEGIN
 END
 GO
 
--- =============================================
--- SP: DELETE - Soft Delete Product
--- =============================================
+
 CREATE OR ALTER PROCEDURE sp_DeleteProduct
     @ProductId INT
 AS
