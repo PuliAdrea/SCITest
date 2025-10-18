@@ -1,7 +1,6 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace SCIProductsAPI.Models
+namespace SCIProducts.Domain.Entities
 {
     public class Product
     {

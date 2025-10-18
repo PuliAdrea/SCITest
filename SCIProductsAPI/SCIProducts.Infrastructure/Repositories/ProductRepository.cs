@@ -1,27 +1,27 @@
-﻿using Microsoft.Data.SqlClient;
-using SCIProductsAPI.Data;
-using SCIProductsAPI.Models;
+﻿using System;
+using System.Collections.Generic;
 using System.Data;
+using Microsoft.Data.SqlClient; // ✅ Nuevo paquete
+using Microsoft.Extensions.Configuration;
+using SCIProducts.Domain.Entities;
+using SCIProducts.Infrastructure.Repositories.Interfaces;
 
-
-namespace SCIProductsAPI.Repositories
+namespace SCIProducts.Infrastructure.Repositories
 {
     public class ProductRepository : IProductRepository
     {
-        private readonly DbConnectionFactory _connectionFactory;
+        private readonly string _connectionString;
 
-        public ProductRepository(DbConnectionFactory connectionFactory)
+        public ProductRepository(IConfiguration configuration)
         {
-            _connectionFactory = connectionFactory;
+            _connectionString = configuration.GetConnectionString("DefaultConnection");
         }
 
-
-        #region public
-        public async Task<IEnumerable<Product>> GetAllAsync()
+        public async Task<IEnumerable<Product>> GetAll()
         {
             var products = new List<Product>();
 
-            using (var connection = _connectionFactory.CreateConnection())
+            using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand("sp_GetAllProducts", connection))
             {
                 command.CommandType = CommandType.StoredProcedure;
@@ -39,11 +39,12 @@ namespace SCIProductsAPI.Repositories
             return products;
         }
 
-        public async Task<Product?> GetByIdAsync(int id)
+
+        public async Task<Product?> GetById(int id)
         {
             Product? product = null;
 
-            using (var connection = _connectionFactory.CreateConnection())
+            using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand("sp_GetProductById", connection))
             {
                 command.CommandType = CommandType.StoredProcedure;
@@ -62,11 +63,11 @@ namespace SCIProductsAPI.Repositories
             return product;
         }
 
-        public async Task<Product?> CreateAsync(Product product)
+        public async Task<Product?> Add(Product product)
         {
             Product? createdProduct = null;
 
-            using (var connection = _connectionFactory.CreateConnection())
+            using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand("sp_CreateProduct", connection))
             {
                 command.CommandType = CommandType.StoredProcedure;
@@ -95,12 +96,11 @@ namespace SCIProductsAPI.Repositories
             return createdProduct;
         }
 
-
-        public async Task<Product?> UpdateAsync(int id, Product product)
+        public async Task<Product?> Update(int id, Product product)
         {
             Product? updatedProduct = null;
 
-            using (var connection = _connectionFactory.CreateConnection())
+            using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand("sp_UpdateProduct", connection))
             {
                 command.CommandType = CommandType.StoredProcedure;
@@ -123,12 +123,11 @@ namespace SCIProductsAPI.Repositories
             return updatedProduct;
         }
 
-
-        public async Task<bool> DeleteAsync(int id)
+        public async Task<bool> Delete(int id)
         {
             bool deleted = false;
 
-            using (var connection = _connectionFactory.CreateConnection())
+            using (var connection = new SqlConnection(_connectionString))
             using (var command = new SqlCommand("sp_DeleteProduct", connection))
             {
                 command.CommandType = CommandType.StoredProcedure;
@@ -140,7 +139,6 @@ namespace SCIProductsAPI.Repositories
                 {
                     if (await reader.ReadAsync())
                     {
-                        // Se considera eliminado si IsActive = false
                         deleted = !(bool)reader["IsActive"];
                     }
                 }
@@ -148,8 +146,6 @@ namespace SCIProductsAPI.Repositories
 
             return deleted;
         }
-
-        #endregion public
 
         #region private
         private Product MapProduct(SqlDataReader reader)
@@ -165,6 +161,5 @@ namespace SCIProductsAPI.Repositories
             };
         }
         #endregion private
-
     }
 }
