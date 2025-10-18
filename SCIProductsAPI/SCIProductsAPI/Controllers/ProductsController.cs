@@ -1,23 +1,22 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SCIProducts.Application.Services.Interfaces;
 using SCIProducts.Domain.Entities;
+using SCIProducts.Application.Services.Interfaces;
 
-namespace SCIProductsAPI.Controllers
+namespace SCIProducts.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     public class ProductsController : ControllerBase
     {
         private readonly IProductService _productService;
+        private readonly ILogger<ProductsController> _logger;
 
-        public ProductsController(IProductService productService)
+        public ProductsController(IProductService productService, ILogger<ProductsController> logger)
         {
             _productService = productService;
+            _logger = logger;
         }
 
-        /// <summary>
-        /// Obtiene todos los productos.
-        /// </summary>
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -28,116 +27,77 @@ namespace SCIProductsAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Error retrieving products.", error = ex.Message });
+                _logger.LogError(ex, "Error al obtener los productos");
+                return StatusCode(500, "Error interno del servidor");
             }
         }
 
-        /// <summary>
-        /// Obtiene un producto por su Id.
-        /// </summary>
-        [HttpGet("{id:int}")]
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             try
             {
                 var product = await _productService.GetById(id);
                 if (product == null)
-                    return NotFound(new { message = $"Product with id {id} not found." });
+                    return NotFound();
 
                 return Ok(product);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Error retrieving product.", error = ex.Message });
+                _logger.LogError(ex, "Error al obtener el producto con ID {ProductId}", id);
+                return StatusCode(500, "Error interno del servidor");
             }
         }
 
-        /// <summary>
-        /// Crea un nuevo producto.
-        /// </summary>
         [HttpPost]
-        public async Task<IActionResult> Add([FromBody] Product product)
+        public async Task<IActionResult> Add(Product product)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
             try
             {
                 var createdProduct = await _productService.Add(product);
-
-                if (createdProduct == null)
-                    return BadRequest(new { message = "Failed to create product. Please verify the data." });
-
-                return CreatedAtAction(nameof(GetById), new { id = createdProduct.Id }, new
-                {
-                    message = "Product created successfully.",
-                    product = createdProduct
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
+                return CreatedAtAction(nameof(GetById), new { id = createdProduct.Id }, createdProduct);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Error creating product.", error = ex.Message });
+                _logger.LogError(ex, "Error al agregar el producto {@Product}", product);
+                return StatusCode(500, "Error interno del servidor");
             }
         }
 
-        /// <summary>
-        /// Actualiza un producto existente.
-        /// </summary>
-        [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Product product)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, Product product)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
             try
             {
                 var updatedProduct = await _productService.Update(id, product);
-
                 if (updatedProduct == null)
-                    return NotFound(new { message = $"Product with id {id} not found or could not be updated." });
+                    return NotFound();
 
-                return Ok(new
-                {
-                    message = "Product updated successfully.",
-                    product = updatedProduct
-                });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
+                return Ok(updatedProduct);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Error updating product.", error = ex.Message });
+                _logger.LogError(ex, "Error al actualizar el producto con ID {ProductId}", id);
+                return StatusCode(500, "Error interno del servidor");
             }
         }
 
-        /// <summary>
-        /// Elimina un producto por Id.
-        /// </summary>
-        [HttpDelete("{id:int}")]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                var result = await _productService.Delete(id);
+                var deleted = await _productService.Delete(id);
+                if (!deleted)
+                    return NotFound();
 
-                if (!result)
-                    return NotFound(new { message = $"Product with id {id} not found or could not be deleted." });
-
-                return Ok(new { message = "Product deleted successfully." });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
+                return NoContent();
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Error deleting product.", error = ex.Message });
+                _logger.LogError(ex, "Error al eliminar el producto con ID {ProductId}", id);
+                return StatusCode(500, "Error interno del servidor");
             }
         }
     }
