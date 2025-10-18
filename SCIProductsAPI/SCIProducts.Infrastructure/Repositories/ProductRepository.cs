@@ -5,7 +5,6 @@ using SCIProducts.Domain.Entities;
 using SCIProducts.Infrastructure.Repositories.Interfaces;
 using System.Data;
 
-
 namespace SCIProducts.Infrastructure.Repositories
 {
     public class ProductRepository : IProductRepository
@@ -49,12 +48,12 @@ namespace SCIProducts.Infrastructure.Repositories
             }
             catch (SqlException ex)
             {
-                _logger.LogError(ex, "Error SQL al obtener los productos desde la base de datos.");
-                throw new ApplicationException("Error al obtener los productos.", ex);
+                _logger.LogError(ex, "SQL error while retrieving products from the database.");
+                throw new ApplicationException("Error while retrieving products.", ex);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error inesperado en GetAll.");
+                _logger.LogError(ex, "Unexpected error in GetAll.");
                 throw;
             }
         }
@@ -89,12 +88,12 @@ namespace SCIProducts.Infrastructure.Repositories
             }
             catch (SqlException ex)
             {
-                _logger.LogError(ex, "Error SQL al obtener el producto con ID {ProductId}.", id);
-                throw new ApplicationException($"Error al obtener el producto {id}.", ex);
+                _logger.LogError(ex, "SQL error while retrieving product with ID {ProductId}.", id);
+                throw new ApplicationException($"Error while retrieving product {id}.", ex);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error inesperado en GetById para ID {ProductId}.", id);
+                _logger.LogError(ex, "Unexpected error in GetById for ID {ProductId}.", id);
                 throw;
             }
         }
@@ -116,17 +115,17 @@ namespace SCIProducts.Infrastructure.Repositories
                 await connection.OpenAsync();
                 await command.ExecuteNonQueryAsync();
 
-                _logger.LogInformation("Producto agregado correctamente: {@Product}", product);
+                _logger.LogInformation("Product added successfully: {@Product}", product);
                 return product;
             }
             catch (SqlException ex)
             {
-                _logger.LogError(ex, "Error SQL al agregar el producto {@Product}.", product);
-                throw new ApplicationException("Error al agregar el producto.", ex);
+                _logger.LogError(ex, "SQL error while adding product {@Product}.", product);
+                throw new ApplicationException("Error while adding product.", ex);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error inesperado en Add para {@Product}.", product);
+                _logger.LogError(ex, "Unexpected error in Add for {@Product}.", product);
                 throw;
             }
         }
@@ -164,25 +163,24 @@ namespace SCIProducts.Infrastructure.Repositories
                         Price = Convert.ToDecimal(reader["Price"])
                     };
 
-                    _logger.LogInformation("Producto actualizado correctamente: {@Product}", updatedProduct);
+                    _logger.LogInformation("Product updated successfully: {@Product}", updatedProduct);
                     return updatedProduct;
                 }
 
-                _logger.LogWarning("No se encontró el producto con ID {ProductId} para actualizar.", id);
+                _logger.LogWarning("Product with ID {ProductId} not found for update.", id);
                 return null;
             }
             catch (SqlException ex)
             {
-                _logger.LogError(ex, "Error SQL al actualizar el producto {@Product}.", product);
-                throw new ApplicationException("Error al actualizar el producto.", ex);
+                _logger.LogError(ex, "SQL error while updating product {@Product}.", product);
+                throw new ApplicationException("Error while updating product.", ex);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error inesperado en Update para {@Product}.", product);
+                _logger.LogError(ex, "Unexpected error in Update for {@Product}.", product);
                 throw;
             }
         }
-
 
         public async Task<bool> Delete(int id)
         {
@@ -204,22 +202,22 @@ namespace SCIProducts.Infrastructure.Repositories
                     bool isActive = Convert.ToBoolean(reader["IsActive"]);
                     if (!isActive)
                     {
-                        _logger.LogInformation("Producto eliminado correctamente con ID {ProductId}.", id);
+                        _logger.LogInformation("Product deleted successfully with ID {ProductId}.", id);
                         return true;
                     }
                 }
 
-                _logger.LogWarning("No se encontró el producto con ID {ProductId} para eliminar.", id);
+                _logger.LogWarning("Product with ID {ProductId} not found for deletion.", id);
                 return false;
             }
             catch (SqlException ex)
             {
-                _logger.LogError(ex, "Error SQL al eliminar el producto con ID {ProductId}.", id);
-                throw new ApplicationException($"Error al eliminar el producto {id}.", ex);
+                _logger.LogError(ex, "SQL error while deleting product with ID {ProductId}.", id);
+                throw new ApplicationException($"Error while deleting product {id}.", ex);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error inesperado en Delete para ID {ProductId}.", id);
+                _logger.LogError(ex, "Unexpected error in Delete for ID {ProductId}.", id);
                 throw;
             }
         }
