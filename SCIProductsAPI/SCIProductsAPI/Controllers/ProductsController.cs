@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SCIProductsAPI.Models;
-using SCIProductsAPI.Repositories;
+using SCIProducts.Application.Services.Interfaces;
+using SCIProducts.Domain.Entities;
 
 namespace SCIProductsAPI.Controllers
 {
@@ -8,74 +8,137 @@ namespace SCIProductsAPI.Controllers
     [Route("api/[controller]")]
     public class ProductsController : ControllerBase
     {
-        private readonly IProductRepository _productRepository;
+        private readonly IProductService _productService;
 
-        public ProductsController(IProductRepository productRepository)
+        public ProductsController(IProductService productService)
         {
-            _productRepository = productRepository;
+            _productService = productService;
         }
 
+        /// <summary>
+        /// Obtiene todos los productos.
+        /// </summary>
         [HttpGet]
-        public async Task<IActionResult> GetAllProducts()
+        public async Task<IActionResult> GetAll()
         {
-            var products = await _productRepository.GetAllAsync();
-            return Ok(products);
+            try
+            {
+                var products = await _productService.GetAll();
+                return Ok(products);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error retrieving products.", error = ex.Message });
+            }
         }
 
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetProductById(int id)
+        /// <summary>
+        /// Obtiene un producto por su Id.
+        /// </summary>
+        [HttpGet("{id:int}")]
+        public async Task<IActionResult> GetById(int id)
         {
-            var product = await _productRepository.GetByIdAsync(id);
-            if (product == null)
-                return NotFound(new { message = $"Product with ID {id} not found." });
+            try
+            {
+                var product = await _productService.GetById(id);
+                if (product == null)
+                    return NotFound(new { message = $"Product with id {id} not found." });
 
-            return Ok(product);
+                return Ok(product);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error retrieving product.", error = ex.Message });
+            }
         }
 
+        /// <summary>
+        /// Crea un nuevo producto.
+        /// </summary>
         [HttpPost]
-        public async Task<IActionResult> CreateProduct([FromBody] Product product)
+        public async Task<IActionResult> Add([FromBody] Product product)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var created = await _productRepository.CreateAsync(product);
-            if (created == null)
-                return StatusCode(500, new { message = "Error creating product." });
+            try
+            {
+                var createdProduct = await _productService.Add(product);
 
-            return CreatedAtAction(nameof(GetProductById), new { id = created.Id }, created);
+                if (createdProduct == null)
+                    return BadRequest(new { message = "Failed to create product. Please verify the data." });
+
+                return CreatedAtAction(nameof(GetById), new { id = createdProduct.Id }, new
+                {
+                    message = "Product created successfully.",
+                    product = createdProduct
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error creating product.", error = ex.Message });
+            }
         }
 
-
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateProduct(int id, [FromBody] Product product)
+        /// <summary>
+        /// Actualiza un producto existente.
+        /// </summary>
+        [HttpPut("{id:int}")]
+        public async Task<IActionResult> Update(int id, [FromBody] Product product)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var existing = await _productRepository.GetByIdAsync(id);
-            if (existing == null)
-                return NotFound(new { message = $"Product with ID {id} not found." });
+            try
+            {
+                var updatedProduct = await _productService.Update(id, product);
 
-            var updated = await _productRepository.UpdateAsync(id, product);
-            if (updated == null)
-                return StatusCode(500, new { message = "Error updating product." });
+                if (updatedProduct == null)
+                    return NotFound(new { message = $"Product with id {id} not found or could not be updated." });
 
-            return Ok(updated);
+                return Ok(new
+                {
+                    message = "Product updated successfully.",
+                    product = updatedProduct
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error updating product.", error = ex.Message });
+            }
         }
 
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProduct(int id)
+        /// <summary>
+        /// Elimina un producto por Id.
+        /// </summary>
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Delete(int id)
         {
-            var existing = await _productRepository.GetByIdAsync(id);
-            if (existing == null)
-                return NotFound(new { message = $"Product with ID {id} not found." });
+            try
+            {
+                var result = await _productService.Delete(id);
 
-            var deleted = await _productRepository.DeleteAsync(id);
-            if (!deleted)
-                return StatusCode(500, new { message = "Error deleting product." });
+                if (!result)
+                    return NotFound(new { message = $"Product with id {id} not found or could not be deleted." });
 
-            return Ok(new { message = $"Product with ID {id} was deleted successfully." });
+                return Ok(new { message = "Product deleted successfully." });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error deleting product.", error = ex.Message });
+            }
         }
     }
 }

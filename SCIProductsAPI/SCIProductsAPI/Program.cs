@@ -1,5 +1,7 @@
-using SCIProductsAPI.Data;
-using SCIProductsAPI.Repositories;
+using SCIProducts.Infrastructure.Repositories;
+using SCIProducts.Application.Services;
+using SCIProducts.Application.Services.Interfaces;
+using SCIProducts.Infrastructure.Repositories.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,8 +12,8 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<DbConnectionFactory>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductService, ProductService>();
 
 var app = builder.Build();
 
